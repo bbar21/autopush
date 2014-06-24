@@ -31,7 +31,7 @@ cd ${AUTOPUSH_HOME}
 : ${AUTOPUSH_TUNNEL_WAITTIME:=30}
 
 #set some internal variables that cannot be changed by the config file
-local AUTOPUSH_LOCKFILE=.autopush.lock
+AUTOPUSH_LOCKFILE=.autopush.lock
 
 #----------------------------------------------
 # Define helper functions
@@ -48,7 +48,7 @@ function enqueue {
 	exec 200>${AUTOPUSH_QUEUE}
 	flock -x -w ${AUTOPUSH_LOCKTIMEOUT} 200
 
-	if[ "$?" -eq 0 ]; then
+	if [ "$?" -eq 0 ]; then
 		#successful, so enqueue
 		echo "${1}" >> ${AUTOPUSH_QUEUE}
 
