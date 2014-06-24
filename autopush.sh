@@ -98,7 +98,7 @@ function transfer {
 
         if [ ${AUTOPUSH_MODE} -eq "scp" ]; then
         	result=$(scp -r ${AUTOPUSH_SCP_OPTIONS} -P ${AUTOPUSH_PORT} "${AUTOPUSH_TARGET}" ${AUTOPUSH_HOST}:${AUTOPUSH_DEST} 2>&1)
-        else if [ ${AUTOPUSH_MODE} -eq "rsync" ]; then
+        elif [ ${AUTOPUSH_MODE} -eq "rsync" ]; then
         	#TODO
         	echo "TODO"
         fi
