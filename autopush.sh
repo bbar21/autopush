@@ -67,7 +67,7 @@ function dequeue {
 	exec 201<>${AUTOPUSH_QUEUE}
 	flock -x -w ${AUTOPUSH_LOCKTIMEOUT} 201
 
-	if[ "$?" -eq 0 ]; then
+	if [ "$?" -eq 0 ]; then
 		#successful, so grab the first line and set it as the target
 		AUTOPUSH_TARGET=$(head -n 1 ${AUTOPUSH_QUEUE})
 
