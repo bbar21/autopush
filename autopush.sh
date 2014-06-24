@@ -47,41 +47,27 @@ function log {
 function enqueue {
 	#get lock on queue lock file
 	exec 200>${AUTOPUSH_QUEUELOCKFILE}
-	flock -x -w ${AUTOPUSH_LOCKTIMEOUT} 200
+	flock -x -w ${AUTOPUSH_LOCKTIMEOUT} 200 || { log "FAIL: Could not obtain lock on queue file. ${1} not enqueued."; return 1; }
 
-	if [ "$?" -eq 0 ]; then
-		#successful, so enqueue
-		echo "${1}" >> ${AUTOPUSH_QUEUE}
+	#successful, so enqueue
+	echo "${1}" >> ${AUTOPUSH_QUEUE}
 
-		return 0
-	else
-		#log enqueue failure
-		log "FAIL: Could not obtain lock on queue file. ${1} not enqueued."
-
-		return 1
-	fi
+	flock -u 200
 }
 
 # Sets the AUTOPUSH_TARGET variable to be the first filepath in the queue, and removes that entry from the queue
 function dequeue {
 	#get lock on queue lock file
 	exec 201<>${AUTOPUSH_QUEUELOCKFILE}
-	flock -x -w ${AUTOPUSH_LOCKTIMEOUT} 201
+	flock -x -w ${AUTOPUSH_LOCKTIMEOUT} 201 || { log "FAIL: Could not obtain lock on queue file. Nothing dequeued."; return 1; }
 
-	if [ "$?" -eq 0 ]; then
-		#successful, so grab the first line and set it as the target
-		AUTOPUSH_TARGET=$(head -n 1 ${AUTOPUSH_QUEUE})
+	#successful, so grab the first line and set it as the target
+	AUTOPUSH_TARGET=$(head -n 1 ${AUTOPUSH_QUEUE})
 
-		#remove first line from file
-		sed -i '1,1d' ${AUTOPUSH_QUEUE}
+	#remove first line from file
+	sed -i '1,1d' ${AUTOPUSH_QUEUE}
 
-		return 0
-	else
-		#log dequeue failure
-		log "FAIL: Could not obtain lock on queue file. Nothing dequeued."
-
-		return 1
-	fi
+	flock -u 201
 }
 
 function transfer {
@@ -117,7 +103,6 @@ function transfer {
 
 		return 1
 	fi
-	
 }
 
 # Opens an SSH tunnel and binds it to a local port
@@ -129,27 +114,29 @@ function setupTunnel {
 }
 
 function process {
-	(
-		flock -n 202 || exit 1
-		echo "$$" > ${AUTOPUSH_LOCKFILE}
+	exec 202>${AUTOPUSH_LOCKFILE}
+	flock -n 202 || { log "INFO: Instance running (lock on autopush lock file could not be obtained)"; exit 1; }
 
-		local AUTOPUSH_TUNNEL_PID=-1
+	echo "$$" > ${AUTOPUSH_LOCKFILE}
 
-		#setup tunnel if needed
-		if [ ${AUTOPUSH_TUNNEL_ENABLE} == "true" ]; then
-			setupTunnel
-		fi
+	local AUTOPUSH_TUNNEL_PID=-1
 
-		#while the linecount of the queue file is greater than zero
-		while [ $(wc -l ${AUTOPUSH_QUEUE} | awk '{print $1}') -gt 0 ]; do
-			#dequeue next transfer and do transfer; if dequeue failed exit the process loop (this prevents infinite loops if the queue file has stuff in it but cannot dequeue entries for some reason)
-			dequeue && transfer || exit 1
-		done
+	#setup tunnel if needed
+	if [ ${AUTOPUSH_TUNNEL_ENABLE} == "true" ]; then
+		setupTunnel
+	fi
 
-		if [ ${AUTOPUSH_TUNNEL_PID} -ne -1 ]; then
-			kill ${AUTOPUSH_TUNNEL_PID}
-		fi
-	) 202>${AUTOPUSH_LOCKFILE}
+	#while the linecount of the queue file is greater than zero
+	while [ $(wc -l ${AUTOPUSH_QUEUE} | awk '{print $1}') -gt 0 ]; do
+		#dequeue next transfer and do transfer; if dequeue failed exit the process loop (this prevents infinite loops if the queue file has stuff in it but cannot dequeue entries for some reason)
+		dequeue && transfer || exit 1
+	done
+
+	if [ ${AUTOPUSH_TUNNEL_PID} -ne -1 ]; then
+		kill ${AUTOPUSH_TUNNEL_PID}
+	fi
+
+	flock -u 202
 }
 
 #-------------------------------------------
@@ -159,7 +146,7 @@ function process {
 #determine if push def file exists in the folder that the input file is in
 if [ -x "$(dirname ${AUTOPUSH_INPUT})/${AUTOPUSH_PUSHDEFNAME}" ]; then
 	#if push def file exists and is readable then queue the input file and start the process loop
-	enqueue $AUTOPUSH_INPUT && (process || log "Instance running (lock on autopush lock file could not be obtained)")
+	enqueue $AUTOPUSH_INPUT && process
 fi
 
 #exit successful
