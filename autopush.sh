@@ -28,6 +28,7 @@ ${AUTOPUSH_SCP_OPTIONS:="-C"}
 
 ${AUTOPUSH_TUNNEL_ENABLE:=false}
 ${AUTOPUSH_TUNNEL_PORT:=22}
+${AUTOPUSH_TUNNEL_WAITTIME:=30}
 
 #set some internal variables that cannot be changed by the config file
 local AUTOPUSH_LOCKFILE=.autopush.lock
@@ -119,13 +120,18 @@ function transfer {
 
 # Opens an SSH tunnel and binds it to a local port
 function setupTunnel {
-	ssh -N -L localhost:25777:${AUTOPUSH_HOST}:${AUTOPUSH_PORT} ${AUTOPUSH_TUNNEL_GATEWAY} -p ${AUTOPUSH_TUNNEL_PORT}
+	ssh -N -L localhost:25777:${AUTOPUSH_HOST}:${AUTOPUSH_PORT} ${AUTOPUSH_TUNNEL_GATEWAY} -p ${AUTOPUSH_TUNNEL_PORT} &
+	sleep ${AUTOPUSH_TUNNEL_WAITTIME}
+
+	AUTOPUSH_TUNNEL_PID=$!
 }
 
 function process {
 	(
 		flock -n 202 || exit 1
 		echo "$$" > ${AUTOPUSH_LOCKFILE}
+
+		local AUTOPUSH_TUNNEL_PID=-1
 
 		#setup tunnel if needed
 		if [ ${AUTOPUSH_TUNNEL_ENABLE} -eq "true" ]; then
@@ -137,6 +143,10 @@ function process {
 			#dequeue next transfer and do transfer; if dequeue failed exit the process loop (this prevents infinite loops if the queue file has stuff in it but cannot dequeue entries for some reason)
 			dequeue && transfer || exit 1
 		done
+
+		if [ ${AUTOPUSH_TUNNEL_PID} -ne -1 ]; then
+			kill ${AUTOPUSH_TUNNEL_PID}
+		fi
 	) 202>${AUTOPUSH_LOCKFILE}
 }
 
