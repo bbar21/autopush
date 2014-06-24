@@ -1,0 +1,1 @@
+bash "$(readlink -f $(dirname "$0"))/autopush.sh" &

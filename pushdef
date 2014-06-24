@@ -1,0 +1,8 @@
+
+# THIS IS OPTIONAL
+# By setting this variable you can override the normal push method setting (the one in autopush.cfg). Setting this allows you to have per-folder settings for transfer method.
+# Leaving this line commented will result in the nomal setting being used.
+#AUTOPUSH_METHOD=
+
+# Specifies the remote destination to transfer files to. Any files in the same folder as this pushdef file will be transfered to this remote path.
+AUTOPUSH_DEST=Path/To/My/Files/
