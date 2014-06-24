@@ -6,7 +6,7 @@
 #-----------------------------------------------
 
 #assign command line params to variables
-local AUTOPUSH_INPUT=$1
+AUTOPUSH_INPUT=$1
 
 # get directory of autopush script and load the config file
 AUTOPUSH_HOME=$(readlink -f $(dirname "$0"))
