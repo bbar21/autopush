@@ -27,11 +27,12 @@ cd ${AUTOPUSH_HOME}
 : ${AUTOPUSH_SCP_OPTIONS:="-C"}
 
 : ${AUTOPUSH_TUNNEL_ENABLE:=false}
-: ${AUTOPUSH_TUNNEL_PORT:=22}
+: ${AUTOPUSH_TUNNEL_GATEWAYPORT:=22}
 : ${AUTOPUSH_TUNNEL_WAITTIME:=30}
 
 #set some internal variables that cannot be changed by the config file
-AUTOPUSH_LOCKFILE=.autopush.lock
+AUTOPUSH_LOCKFILE=".autopush.lock"
+AUTOPUSH_QUEUELOCKFILE=".queue.lock"
 
 #----------------------------------------------
 # Define helper functions
@@ -45,7 +46,7 @@ function log {
 # Takes a filepath and safely appends it into the queue file
 function enqueue {
 	#get lock on queue lock file
-	exec 200>${AUTOPUSH_QUEUE}
+	exec 200>${AUTOPUSH_QUEUELOCKFILE}
 	flock -x -w ${AUTOPUSH_LOCKTIMEOUT} 200
 
 	if [ "$?" -eq 0 ]; then
@@ -64,7 +65,7 @@ function enqueue {
 # Sets the AUTOPUSH_TARGET variable to be the first filepath in the queue, and removes that entry from the queue
 function dequeue {
 	#get lock on queue lock file
-	exec 201<>${AUTOPUSH_QUEUE}
+	exec 201<>${AUTOPUSH_QUEUELOCKFILE}
 	flock -x -w ${AUTOPUSH_LOCKTIMEOUT} 201
 
 	if [ "$?" -eq 0 ]; then
@@ -121,7 +122,7 @@ function transfer {
 
 # Opens an SSH tunnel and binds it to a local port
 function setupTunnel {
-	ssh -N -L localhost:25777:${AUTOPUSH_HOST}:${AUTOPUSH_PORT} ${AUTOPUSH_TUNNEL_GATEWAY} -p ${AUTOPUSH_TUNNEL_PORT} &
+	ssh -N -L localhost:25777:${AUTOPUSH_HOST}:${AUTOPUSH_PORT} ${AUTOPUSH_TUNNEL_GATEWAY} -p ${AUTOPUSH_TUNNEL_GATEWAYPORT} &
 	sleep ${AUTOPUSH_TUNNEL_WAITTIME}
 
 	AUTOPUSH_TUNNEL_PID=$!
