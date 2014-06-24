@@ -100,6 +100,7 @@ function transfer {
         	result=$(scp -r ${AUTOPUSH_SCP_OPTIONS} -P ${AUTOPUSH_PORT} "${AUTOPUSH_TARGET}" ${AUTOPUSH_HOST}:${AUTOPUSH_DEST} 2>&1)
         else if [ ${AUTOPUSH_MODE} -eq "rsync" ]; then
         	#TODO
+        	echo "TODO"
         fi
 
         if [ "$?" -eq 0 ]; then
