@@ -135,7 +135,7 @@ function process {
 		local AUTOPUSH_TUNNEL_PID=-1
 
 		#setup tunnel if needed
-		if [ ${AUTOPUSH_TUNNEL_ENABLE} -eq "true" ]; then
+		if [ ${AUTOPUSH_TUNNEL_ENABLE} == "true" ]; then
 			setupTunnel
 		fi
 
