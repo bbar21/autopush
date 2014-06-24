@@ -15,20 +15,20 @@ source autopush.cfg
 
 #change to autopush home and load defaults for variables if config variables not set
 cd ${AUTOPUSH_HOME}
-${AUTOPUSH_QUEUE:=queue.txt}
-${AUTOPUSH_LOG:=autopush.log}
-${AUTOPUSH_PUSHDEFNAME:=pushdef}
-${AUTOPUSH_LOCKTIMEOUT:=60}
-${AUTOPUSH_FOLDERPERMISSIONS:=755}
-${AUTOPUSH_FILEPERMISSIONS:=644}
+: ${AUTOPUSH_QUEUE:=queue.txt}
+: ${AUTOPUSH_LOG:=autopush.log}
+: ${AUTOPUSH_PUSHDEFNAME:=pushdef}
+: ${AUTOPUSH_LOCKTIMEOUT:=60}
+: ${AUTOPUSH_FOLDERPERMISSIONS:=755}
+: ${AUTOPUSH_FILEPERMISSIONS:=644}
 
-${AUTOPUSH_MODE:=scp}
-${AUTOPUSH_PORT:=22}
-${AUTOPUSH_SCP_OPTIONS:="-C"}
+: ${AUTOPUSH_MODE:=scp}
+: ${AUTOPUSH_PORT:=22}
+: ${AUTOPUSH_SCP_OPTIONS:="-C"}
 
-${AUTOPUSH_TUNNEL_ENABLE:=false}
-${AUTOPUSH_TUNNEL_PORT:=22}
-${AUTOPUSH_TUNNEL_WAITTIME:=30}
+: ${AUTOPUSH_TUNNEL_ENABLE:=false}
+: ${AUTOPUSH_TUNNEL_PORT:=22}
+: ${AUTOPUSH_TUNNEL_WAITTIME:=30}
 
 #set some internal variables that cannot be changed by the config file
 local AUTOPUSH_LOCKFILE=.autopush.lock
