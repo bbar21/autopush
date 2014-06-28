@@ -29,8 +29,11 @@ cd ${AUTOPUSH_HOME}
 
 : ${AUTOPUSH_TUNNEL_ENABLE:=false}
 : ${AUTOPUSH_TUNNEL_LOCALPORT:=25777}
+: ${AUTOPUSH_TUNNEL_HOST:=}
+: ${AUTOPUSH_TUNNEL_HOSTPORT:=22}
+: ${AUTOPUSH_TUNNEL_GATEWAY:=}
 : ${AUTOPUSH_TUNNEL_GATEWAYPORT:=}
-: ${AUTOPUSH_TUNNEL_OPTIONS:="-fNT"}
+: ${AUTOPUSH_TUNNEL_OPTIONS:="-NT"}
 : ${AUTOPUSH_TUNNEL_WAITTIME:=30}
 
 : ${AUTOPUSH_NOTIFYPATH:=}
@@ -205,6 +208,8 @@ function process {
 
 #test for existence of required variables
 [ -z "${AUTOPUSH_HOST}" ] && log 0 1 ${AUTOPUSH_INPUT} "FAIL: AUTOPUSH_HOST must be defined in the autopush.cfg file." 4
+
+#TODO test ssh tunnel options
 
 #if a file was actually passed to the script
 if [ -n "${AUTOPUSH_INPUT}" ]; then
