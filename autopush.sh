@@ -112,7 +112,7 @@ function setupTunnel {
 	log 0 0 ${AUTOPUSH_INPUT} "INFO: Openning an SSH tunnel." 3
 
 	#create SSH tunnel using the config options
-	ssh -L localhost:${AUTOPUSH_TUNNEL_LOCALPORT}:${AUTOPUSH_HOST}:${AUTOPUSH_PORT} ${AUTOPUSH_TUNNEL_OPTIONS} ${AUTOPUSH_TUNNEL_GATEWAY} &
+	ssh -L localhost:${AUTOPUSH_TUNNEL_LOCALPORT}:${AUTOPUSH_TUNNEL_HOST}:${AUTOPUSH_TUNNEL_HOSTPORT} ${AUTOPUSH_TUNNEL_OPTIONS} ${AUTOPUSH_TUNNEL_GATEWAY} &
 
 	#sleep to allow time for the tunnel to be negotiated
 	sleep ${AUTOPUSH_TUNNEL_WAITTIME}
