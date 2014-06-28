@@ -1,1 +1,3 @@
-bash "$(readlink -f $(dirname "$0"))/autopush.sh" &
+(
+	"$(readlink -f $0 | xargs dirname)/autopush.sh" $@ &
+)
