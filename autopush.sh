@@ -67,7 +67,7 @@ function log {
 	echo -e "[$(date '+%Y/%m/%d - %T.%N')] $4" | tee -a ${AUTOPUSH_LOG}
 
 	if [ $1 -eq 1 ]; then
-		[ -n "${AUTOPUSH_NOTIFYPATH}" ] && $(${AUTOPUSH_NOTIFYPATH} $2 $3 $4 $5 &)
+		[ -n "${AUTOPUSH_NOTIFYPATH}" ] && ${AUTOPUSH_NOTIFYPATH} $2 $3 $4 $5 &
 	fi
 }
 
