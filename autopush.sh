@@ -121,7 +121,6 @@ function setupTunnel {
 	AUTOPUSH_TUNNEL_PID=$!
 
 	#now set variables to point to the local port that is the tunnels entry point
-	AUTOPUSH_HOST=localhost
 	AUTOPUSH_PORT=${AUTOPUSH_TUNNEL_LOCALPORT}
 }
 
