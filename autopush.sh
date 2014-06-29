@@ -133,6 +133,7 @@ function transfer {
 		#source the pushdef file in order to set the push definition variables
 		source ${pushdef}
 
+		#changing the permissions on files / directories before sending
 		if [ -d ${AUTOPUSH_TARGET} ]; then
 			find $file -type d -exec chmod ${AUTOPUSH_FOLDERPERMISSIONS} {} \;
             find $file -type f -exec chmod ${AUTOPUSH_FILEPERMISSIONS} {} \;
