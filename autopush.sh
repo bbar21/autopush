@@ -141,6 +141,12 @@ function transfer {
         	chmod ${AUTOPUSH_FILEPERMISSIONS} ${AUTOPUSH_TARGET}
         fi
 
+        #check if the push mode has been overridden
+        if [ -n "${AUTOPUSH_MODE_OVERRIDE}" ]; then
+        	local mode_original=${AUTOPUSH_MODE}
+        	AUTOPUSH_MODE=AUTOPUSH_MODE_OVERRIDE
+        fi
+
         # if the port is set, add it to the SCP options
 		[ -n "${AUTOPUSH_PORT}" ] && AUTOPUSH_SCP_OPTIONS="${AUTOPUSH_SCP_OPTIONS} -P ${AUTOPUSH_PORT}"
 
@@ -148,8 +154,20 @@ function transfer {
         if [ "${AUTOPUSH_MODE}" = "scp" ]; then
         	result=$(scp -r ${AUTOPUSH_SCP_OPTIONS} "${AUTOPUSH_TARGET}" ${AUTOPUSH_HOST}:${AUTOPUSH_DEST} 2>&1)
         elif [ "${AUTOPUSH_MODE}" = "rsync" ]; then
-        	#TODO
-        	echo "TODO"
+        	#get directory to rsync
+        	local targetDir=$(readlink -f ${AUTOPUSH_TARGET} | xargs dirname)
+
+        	if [ "${AUTOPUSH_TUNNEL_ENABLE}" = "true" ]; then
+        		result=$(rsync -aue "ssh -p ${AUTOPUSH_PORT}" ${targetDir} ... 2>&1)
+        	else
+        		result=$()
+        	fi	
+        fi
+
+        #reset autopush mode and unset override flag
+        if [ -n "${mode_original}" ]; then
+        	AUTOPUSH_MODE=${mode_original}
+        	AUTOPUSH_MODE_OVERRIDE=
         fi
 
         if [ "$?" -eq 0 ]; then
