@@ -6,7 +6,7 @@
 #-----------------------------------------------
 
 #assign command line params to variables
-AUTOPUSH_INPUT=$1
+AUTOPUSH_INPUT=$(readlink -f $1)
 
 # get directory of autopush script and load the config file
 AUTOPUSH_HOME=$(readlink -f $0 | xargs dirname)
@@ -135,11 +135,11 @@ function transfer {
 
 		#changing the permissions on files / directories before sending
 		if [ -d ${AUTOPUSH_TARGET} ]; then
-			find $file -type d -exec chmod ${AUTOPUSH_FOLDERPERMISSIONS} {} \;
-            find $file -type f -exec chmod ${AUTOPUSH_FILEPERMISSIONS} {} \;
-        else
-        	chmod ${AUTOPUSH_FILEPERMISSIONS} ${AUTOPUSH_TARGET}
-        fi
+			find ${AUTOPUSH_TARGET} -type d -exec chmod ${AUTOPUSH_FOLDERPERMISSIONS} {} \;
+		        find ${AUTOPUSH_TARGET} -type f -exec chmod ${AUTOPUSH_FILEPERMISSIONS} {} \;
+        	else
+        		chmod ${AUTOPUSH_FILEPERMISSIONS} ${AUTOPUSH_TARGET}
+        	fi
 
         #check if the push mode has been overridden
         if [ -n "${AUTOPUSH_MODE_OVERRIDE}" ]; then
@@ -151,8 +151,10 @@ function transfer {
 		[ -n "${AUTOPUSH_PORT}" ] && AUTOPUSH_SCP_OPTIONS="${AUTOPUSH_SCP_OPTIONS} -P ${AUTOPUSH_PORT}"
 
         local result=
+	local exitcode=-1
         if [ "${AUTOPUSH_MODE}" = "scp" ]; then
         	result=$(scp -r ${AUTOPUSH_SCP_OPTIONS} "${AUTOPUSH_TARGET}" ${AUTOPUSH_HOST}:${AUTOPUSH_DEST} 2>&1)
+		exitcode=$?
         elif [ "${AUTOPUSH_MODE}" = "rsync" ]; then
         	#get directory to rsync
         	local targetDir=$(readlink -f ${AUTOPUSH_TARGET} | xargs dirname)
@@ -170,7 +172,7 @@ function transfer {
         	AUTOPUSH_MODE_OVERRIDE=
         fi
 
-        if [ "$?" -eq 0 ]; then
+        if [ $exitcode -eq 0 ]; then
         	#success
         	log 1 0 ${AUTOPUSH_TARGET} "  OK: Successfully pushed $(basename ${AUTOPUSH_TARGET})" 0
         else
