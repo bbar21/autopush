@@ -2,3 +2,4 @@ queue
 queue.txt
 .queue.lock
 .autopush.lock
+autopush.cfg
