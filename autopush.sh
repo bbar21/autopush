@@ -128,7 +128,7 @@ function setupTunnel {
 function transfer {
 	log 0 0 ${AUTOPUSH_TARGET} "INFO: Attempting to transfer ${AUTOPUSH_TARGET}" 0
 
-	local pushdef="$(dirname ${AUTOPUSH_INPUT})/${AUTOPUSH_PUSHDEFNAME}"
+	local pushdef="$(dirname ${AUTOPUSH_TARGET})/${AUTOPUSH_PUSHDEFNAME}"
 	if [ -x ${pushdef} ]; then
 		#source the pushdef file in order to set the push definition variables
 		source ${pushdef}
