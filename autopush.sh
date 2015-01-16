@@ -81,7 +81,7 @@ function enqueue {
 	#successful, so enqueue
 	echo "${1}" >> ${AUTOPUSH_QUEUE}
 
-	log 0 0 ${AUTOPUSH_INPUT} "INFO: Enqueued ${AUTOPUSH_INPUT}" 1
+	log 0 0 $1 "INFO: Enqueued ${1}" 1
 
 	#unlock and then drop file handle
 	flock -u 200
@@ -100,7 +100,7 @@ function dequeue {
 	#remove first line from file
 	sed -i '1,1d' ${AUTOPUSH_QUEUE}
 
-	log 0 0 ${AUTOPUSH_TARGET} "INFO: Dequeued ${AUTOPUSH_INPUT}" 1
+	log 0 0 ${AUTOPUSH_TARGET} "INFO: Dequeued ${AUTOPUSH_TARGET}" 1
 
 	#unlock and then drop file handle
 	flock -u 201
@@ -148,7 +148,7 @@ function transfer {
         fi
 
         # if the port is set, add it to the SCP options
-		[ -n "${AUTOPUSH_PORT}" ] && AUTOPUSH_SCP_OPTIONS="${AUTOPUSH_SCP_OPTIONS} -P ${AUTOPUSH_PORT}"
+	[ -n "${AUTOPUSH_PORT}" ] && AUTOPUSH_SCP_OPTIONS="${AUTOPUSH_SCP_OPTIONS} -P ${AUTOPUSH_PORT}"
 
         local result=
 	local exitcode=-1
@@ -214,7 +214,7 @@ function process {
 	#if the tunnel PID is set then kill that process
 	[ -n "${AUTOPUSH_TUNNEL_PID}" ] && kill ${AUTOPUSH_TUNNEL_PID}
 
-	log 0 0 ${AUTOPUSH_INPUT} "INFO: All done. Process singleton stopping." 4
+	log 0 0 ${AUTOPUSH_TRANSFER} "INFO: All done. Process singleton stopping." 4
 
 	#remove PID from lock file, unlock, and then drop file handle
 	echo "" > ${AUTOPUSH_LOCKFILE}
