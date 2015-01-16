@@ -150,8 +150,12 @@ function transfer {
         # if the port is set, add it to the SCP options
 	[ -n "${AUTOPUSH_PORT}" ] && AUTOPUSH_SCP_OPTIONS="${AUTOPUSH_SCP_OPTIONS} -P ${AUTOPUSH_PORT}"
 
+	# get start time
+	local start="$(date +%s)"
+
         local result=
 	local exitcode=-1
+
         if [ "${AUTOPUSH_MODE}" = "scp" ]; then
         	result=$(scp -r ${AUTOPUSH_SCP_OPTIONS} "${AUTOPUSH_TARGET}" ${AUTOPUSH_HOST}:${AUTOPUSH_DEST} 2>&1)
 		exitcode=$?
@@ -166,6 +170,10 @@ function transfer {
         	fi	
         fi
 
+	# get the elapsed time
+	local timer="$(($(date +%s)-start))"
+	local elapsed=$(printf "%02dh%02dm%02ds" "$((timer/3600))" "$((timer/60%60))" "$((timer%60))")
+
         #reset autopush mode and unset override flag
         if [ -n "${mode_original}" ]; then
         	AUTOPUSH_MODE=${mode_original}
@@ -174,7 +182,7 @@ function transfer {
 
         if [ $exitcode -eq 0 ]; then
         	#success
-        	log 1 0 ${AUTOPUSH_TARGET} "  OK: Successfully pushed $(basename ${AUTOPUSH_TARGET})" 0
+        	log 1 0 ${AUTOPUSH_TARGET} "  OK: Successfully pushed $(basename ${AUTOPUSH_TARGET}) in ${elapsed}" 0
         else
         	#failure
         	log 1 1 ${AUTOPUSH_TARGET} "FAIL: Error pushing $(basename ${AUTOPUSH_TARGET})\n\t\t\t        STDERR: ${result}" 0
@@ -214,7 +222,7 @@ function process {
 	#if the tunnel PID is set then kill that process
 	[ -n "${AUTOPUSH_TUNNEL_PID}" ] && kill ${AUTOPUSH_TUNNEL_PID}
 
-	log 0 0 ${AUTOPUSH_TRANSFER} "INFO: All done. Process singleton stopping." 4
+	log 0 0 ${AUTOPUSH_INPUT} "INFO: All done. Process singleton stopping." 4
 
 	#remove PID from lock file, unlock, and then drop file handle
 	echo "" > ${AUTOPUSH_LOCKFILE}
