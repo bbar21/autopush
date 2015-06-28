@@ -148,52 +148,52 @@ function transfer {
         		chmod ${AUTOPUSH_FILEPERMISSIONS} ${AUTOPUSH_TARGET}
         	fi
 
-        #check if the push mode has been overridden
-        if [ -n "${AUTOPUSH_MODE_OVERRIDE}" ]; then
-        	local mode_original=${AUTOPUSH_MODE}
-        	AUTOPUSH_MODE=AUTOPUSH_MODE_OVERRIDE
-        fi
-
-        # if the port is set, add it to the SCP options
-	[ -n "${AUTOPUSH_PORT}" ] && AUTOPUSH_SCP_OPTIONS="${AUTOPUSH_SCP_OPTIONS} -P ${AUTOPUSH_PORT}"
-
-	# get start time
-	local start="$(date +%s)"
-
-        local result=
-	local exitcode=-1
-
-        if [ "${AUTOPUSH_MODE}" = "scp" ]; then
-        	result=$(scp -r ${AUTOPUSH_SCP_OPTIONS} "${AUTOPUSH_TARGET}" ${AUTOPUSH_HOST}:${AUTOPUSH_DEST} 2>&1)
-		exitcode=$?
-        elif [ "${AUTOPUSH_MODE}" = "rsync" ]; then
-        	#get directory to rsync
-        	local targetDir=$(readlink -f ${AUTOPUSH_TARGET} | xargs dirname)
-
-        	if [ "${AUTOPUSH_TUNNEL_ENABLE}" = "true" ]; then
-        		result=$(rsync -aue "ssh -p ${AUTOPUSH_PORT}" ${targetDir} ... 2>&1)
+        	#check if the push mode has been overridden
+        	if [ -n "${AUTOPUSH_MODE_OVERRIDE}" ]; then
+        		local mode_original=${AUTOPUSH_MODE}
+        		AUTOPUSH_MODE=AUTOPUSH_MODE_OVERRIDE
+        	fi
+	
+        	# if the port is set, add it to the SCP options
+		[ -n "${AUTOPUSH_PORT}" ] && AUTOPUSH_SCP_OPTIONS="${AUTOPUSH_SCP_OPTIONS} -P ${AUTOPUSH_PORT}"
+	
+		# get start time
+		local start="$(date +%s)"
+	
+        	local result=
+		local exitcode=-1
+	
+        	if [ "${AUTOPUSH_MODE}" = "scp" ]; then
+        		result=$(scp -r ${AUTOPUSH_SCP_OPTIONS} "${AUTOPUSH_TARGET}" ${AUTOPUSH_HOST}:${AUTOPUSH_DEST} 2>&1)
+			exitcode=$?
+        	elif [ "${AUTOPUSH_MODE}" = "rsync" ]; then
+        		#get directory to rsync
+        		local targetDir=$(readlink -f ${AUTOPUSH_TARGET} | xargs dirname)
+	
+        		if [ "${AUTOPUSH_TUNNEL_ENABLE}" = "true" ]; then
+        			result=$(rsync -aue "ssh -p ${AUTOPUSH_PORT}" ${targetDir} ... 2>&1)
+        		else
+        			result=$()
+        		fi	
+        	fi
+	
+		# get the elapsed time
+		local timer="$(($(date +%s)-start))"
+		local elapsed=$(printf "%02dh%02dm%02ds" "$((timer/3600))" "$((timer/60%60))" "$((timer%60))")
+	
+        	#reset autopush mode and unset override flag
+        	if [ -n "${mode_original}" ]; then
+        		AUTOPUSH_MODE=${mode_original}
+        		AUTOPUSH_MODE_OVERRIDE=
+        	fi
+	
+        	if [ $exitcode -eq 0 ]; then
+        		#success
+        		log 1 0 ${AUTOPUSH_TARGET} "  OK: Successfully pushed $(basename ${AUTOPUSH_TARGET}) in ${elapsed}" 0
         	else
-        		result=$()
-        	fi	
-        fi
-
-	# get the elapsed time
-	local timer="$(($(date +%s)-start))"
-	local elapsed=$(printf "%02dh%02dm%02ds" "$((timer/3600))" "$((timer/60%60))" "$((timer%60))")
-
-        #reset autopush mode and unset override flag
-        if [ -n "${mode_original}" ]; then
-        	AUTOPUSH_MODE=${mode_original}
-        	AUTOPUSH_MODE_OVERRIDE=
-        fi
-
-        if [ $exitcode -eq 0 ]; then
-        	#success
-        	log 1 0 ${AUTOPUSH_TARGET} "  OK: Successfully pushed $(basename ${AUTOPUSH_TARGET}) in ${elapsed}" 0
-        else
-        	#failure
-        	log 1 1 ${AUTOPUSH_TARGET} "FAIL: Error pushing $(basename ${AUTOPUSH_TARGET})\n\t\t\t        STDERR: ${result}" 0
-        fi
+        		#failure
+        		log 1 1 ${AUTOPUSH_TARGET} "FAIL: Error pushing $(basename ${AUTOPUSH_TARGET})\n\t\t\t        STDERR: ${result}" 0
+        	fi
 	else
 		#log the fact that an entry made it into the queue file but did not have a valid pushdef file
 		log 1 1 ${AUTOPUSH_TARGET} "FAIL: Problem reading or executing associated pushdef file for ${AUTOPUSH_TARGET}." 0
