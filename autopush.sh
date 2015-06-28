@@ -7,6 +7,7 @@
 
 #assign command line params to variables
 AUTOPUSH_INPUT=$(readlink -f $1)
+AUTOPUSH_MANUALPUSHDEF=$(readlink -f $2)
 
 # get directory of autopush script and load the config file
 AUTOPUSH_HOME=$(readlink -f $0 | xargs dirname)
@@ -128,7 +129,13 @@ function setupTunnel {
 function transfer {
 	log 0 0 ${AUTOPUSH_TARGET} "INFO: Attempting to transfer ${AUTOPUSH_TARGET}" 0
 
-	local pushdef="$(dirname ${AUTOPUSH_TARGET})/${AUTOPUSH_PUSHDEFNAME}"
+	local pushdef=""
+	if [ -x ${AUTOPUSH_MANUALPUSHDEF} ]; then
+		pushdef=${AUTOPUSH_MANUALPUSHDEF}
+	else
+		pushdef="$(dirname ${AUTOPUSH_TARGET})/${AUTOPUSH_PUSHDEFNAME}"
+	fi
+
 	if [ -x ${pushdef} ]; then
 		#source the pushdef file in order to set the push definition variables
 		source ${pushdef}
@@ -245,6 +252,9 @@ if [ -n "${AUTOPUSH_INPUT}" ]; then
 	if [ -r "$(dirname ${AUTOPUSH_INPUT})/${AUTOPUSH_PUSHDEFNAME}" ]; then
 		#if push def file exists and is readable then queue the input file and start the process loop
 		enqueue $AUTOPUSH_INPUT && process
+	elif [ -r "${AUTOPUSH_MANUALPUSHDEF}" ]; then
+		#or if we have a manual push def defined
+		enqueue $AUTOPUSH_INPUT && process
 	else
 		log 0 1 ${AUTOPUSH_INPUT} "INFO: Cannot find or read pushdef file for ${AUTOPUSH_INPUT}" 4
 	fi
@@ -252,3 +262,4 @@ fi
 
 #exit successful
 exit 0
+
