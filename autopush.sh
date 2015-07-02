@@ -7,7 +7,6 @@
 
 #assign command line params to variables
 AUTOPUSH_INPUT=$(readlink -f $1)
-AUTOPUSH_MANUALPUSHDEF=$(readlink -f $2)
 
 # get directory of autopush script and load the config file
 AUTOPUSH_HOME=$(readlink -f $0 | xargs dirname)
@@ -72,8 +71,10 @@ function log {
 	fi
 }
 
-# Takes a filepath and safely appends it into the queue file
+# Takes a filepath and a pushpath and safely appends them into the queue file.
+# The target comes on the first line, followed by the pushpath on the next line
 #	$1: File to enqueue
+#	$2: Pushpath to use
 function enqueue {
 	#get lock on queue lock file
 	exec 200>${AUTOPUSH_QUEUELOCKFILE}
@@ -81,8 +82,9 @@ function enqueue {
 
 	#successful, so enqueue
 	echo "${1}" >> ${AUTOPUSH_QUEUE}
+	echo "${2}" >> ${AUTOPUSH_QUEUE}
 
-	log 0 0 $1 "INFO: Enqueued ${1}" 1
+	log 0 0 $1 "INFO: Enqueued ${1} with pushdef ${2}" 1
 
 	#unlock and then drop file handle
 	flock -u 200
@@ -101,7 +103,13 @@ function dequeue {
 	#remove first line from file
 	sed -i '1,1d' ${AUTOPUSH_QUEUE}
 
-	log 0 0 ${AUTOPUSH_TARGET} "INFO: Dequeued ${AUTOPUSH_TARGET}" 1
+	#next grab the pushpath
+	AUTOPUSH_TARGET_PUSHDEF=$(head -n 1 ${AUTOPUSH_QUEUE})
+
+	#then remove that line again
+	sed -i '1,1d' ${AUTOPUSH_QUEUE}
+
+	log 0 0 ${AUTOPUSH_TARGET} "INFO: Dequeued ${AUTOPUSH_TARGET} with pushdef ${AUTOPUSH_TARGET_PUSHDEF}" 1
 
 	#unlock and then drop file handle
 	flock -u 201
@@ -127,18 +135,11 @@ function setupTunnel {
 
 # Core subroutine that handles transerring a single file
 function transfer {
-	log 0 0 ${AUTOPUSH_TARGET} "INFO: Attempting to transfer ${AUTOPUSH_TARGET}" 0
+	log 0 0 ${AUTOPUSH_TARGET} "INFO: Attempting to transfer ${AUTOPUSH_TARGET} using pushdef ${AUTOPUSH_TARGET_PUSHDEF}" 0
 
-	local pushdef=""
-	if [ -x ${AUTOPUSH_MANUALPUSHDEF} ]; then
-		pushdef=${AUTOPUSH_MANUALPUSHDEF}
-	else
-		pushdef="$(dirname ${AUTOPUSH_TARGET})/${AUTOPUSH_PUSHDEFNAME}"
-	fi
-
-	if [ -x ${pushdef} ]; then
+	if [ -x ${AUTOPUSH_TARGET_PUSHDEF} ]; then
 		#source the pushdef file in order to set the push definition variables
-		source ${pushdef}
+		source ${AUTOPUSH_TARGET_PUSHDEF}
 
 		#changing the permissions on files / directories before sending
 		if [ -d ${AUTOPUSH_TARGET} ]; then
@@ -251,10 +252,12 @@ if [ -n "${AUTOPUSH_INPUT}" ]; then
 	#determine if push def file exists in the folder that the input file is in
 	if [ -r "$(dirname ${AUTOPUSH_INPUT})/${AUTOPUSH_PUSHDEFNAME}" ]; then
 		#if push def file exists and is readable then queue the input file and start the process loop
-		enqueue $AUTOPUSH_INPUT && process
-	elif [ -r "${AUTOPUSH_MANUALPUSHDEF}" ]; then
+		enqueue "$AUTOPUSH_INPUT" "$(dirname ${AUTOPUSH_INPUT})/${AUTOPUSH_PUSHDEFNAME}" && process
+	elif [ -n "$2" ]; then
 		#or if we have a manual push def defined
-		enqueue $AUTOPUSH_INPUT && process
+		if [ -r "$(readlink -f ${2})" ]; then
+			enqueue "$AUTOPUSH_INPUT" "$(readlink -f ${2})" && process
+		fi
 	else
 		log 0 1 ${AUTOPUSH_INPUT} "INFO: Cannot find or read pushdef file for ${AUTOPUSH_INPUT}" 4
 	fi
